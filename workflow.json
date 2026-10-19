@@ -1,0 +1,190 @@
+{
+  "name": "AI Cold Email Draft Generator & Launcher (Groq)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cold-email-draft",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "0697ec11-3759-4251-9705-e0e686e1754a",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "cold-email-draft"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "openai/gpt-oss-120b",
+          "mode": "list",
+          "cachedResultName": "OPENAI/GPT-OSS-120B"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Write a short, professional cold email in English for the project \"{{ $json.body.projectName }}\". The offer is: {{ $json.body.offer }}. Return only the email body, no subject line."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "59855ec4-7a78-4101-aab8-856deb725a02",
+      "name": "Groq - Write Email",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        240,
+        0
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "nyEbHca0gBbfuDd6",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "subject-field",
+              "name": "subject",
+              "value": "=Quick idea for {{ $('Webhook').item.json.body.projectName }}",
+              "type": "string"
+            },
+            {
+              "id": "body-field",
+              "name": "emailBody",
+              "value": "={{ $json.message.content }}",
+              "type": "string"
+            },
+            {
+              "id": "to-field",
+              "name": "toEmail",
+              "value": "={{ $('Webhook').item.json.body.email }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ef971f8d-970e-4898-80a0-e226ae2a9fc7",
+      "name": "Prepare Email",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "maheenazhar621@gmail.com",
+        "toEmail": "={{ $json.toEmail }}",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.emailBody }}",
+        "options": {
+          "appendAttribution": true
+        }
+      },
+      "id": "07689b6a-9f76-48fd-ab3a-2ab462a235d1",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        0
+      ],
+      "webhookId": "3def897b-2a54-482e-8698-56183fa980b4",
+      "credentials": {
+        "smtp": {
+          "id": "oLCmJkux8zwNglIg",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"ok\": true, \"message\": \"Cold email sent\"}",
+        "options": {}
+      },
+      "id": "9fc24872-ca34-4c07-b49e-d3b786b54090",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Groq - Write Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq - Write Email": {
+      "main": [
+        [
+          {
+            "node": "Prepare Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b174cc48-f998-414d-aad0-0ae294230ccc",
+  "id": "JHMiGrarOBMm7Rv7",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "pinData": {}
+}
